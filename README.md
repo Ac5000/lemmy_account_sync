@@ -1,20 +1,14 @@
-# Migrate your subscribed Lemmy communities from one account to another
+# Sync Your Subscribed Lemmy Communities Between Multiple Accounts
 
-## Usage
-
-```text
-usage: lemmy_migrate [-h] -c config_file
-
-Migrate subscribed communities from one account to another
-
-options:
-  -h, --help      show this help message and exit
-  -c config_file  Path to config file
-```
+This program will look at multiple accounts, figure out a master list of communities between them, and make sure all accounts are subscribed to the same communities.
 
 ## Configuration
 
-Operation is now controlled by a configuration file as such:
+The program is controlled by a configuration file. See "exampleconfig.ini" for an example of the format.
+
+Copy, paste, and rename to "myconfig.ini" and fill in your accounts.
+
+You can have as many accounts as you wish. Labels for accounts can be anything.
 
 ```ini
 [Main Account]
@@ -28,5 +22,8 @@ User = cooluser
 Password = badpassword
 ```
 
-[Main Account] is required for your primary account, and you can have as many secondary accounts as you wish. Labels for
-secondary accounts can be anything.
+## Usage
+
+```text
+Run lemmy_sync.py after creating and updating the configuration file.
+```
