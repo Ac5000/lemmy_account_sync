@@ -1,9 +1,20 @@
-import sys
+"""Main program to run. Migrates your accounts."""
 import argparse
 import configparser
+import sys
+
 from lemmy import Lemmy
 
+
 def get_config(cfile):
+    """Get accounts from the config.ini
+
+    Args:
+        cfile (StrOrBytesPath | Iterable[StrOrBytesPath]): Config file
+
+    Returns:
+        dict[str, dict[str, str]]: Dictionary of accounts and logins
+    """
     config = configparser.ConfigParser()
     read = config.read(cfile)
     if not read:
@@ -13,25 +24,35 @@ def get_config(cfile):
     accounts = {i: dict(config.items(i)) for i in config.sections()}
     return accounts
 
+
 def get_args():
+    """Gets arguments from the console to use in the rest of the program
+
+    Returns:
+        Path: Path to the config file
+    """
     parser = argparse.ArgumentParser(
         prog='lemmy_migrate',
         description='Migrate subscribed communities from one account to another')
 
     parser.add_argument('-c', required=True, help="Path to config file",
-                        metavar="config_file") 
+                        metavar="config_file")
     args = parser.parse_args()
     return args.c
 
+
 def main():
+    """Main code structure to do the migrations.
+    """
     cfg = get_args()
     accounts = get_config(cfg)
 
     # source site
-    print(f"\n[ Getting Main Account info - {accounts['Main Account']['site']} ]")
+    print(
+        f"\n[ Getting Main Account info - {accounts['Main Account']['site']} ]")
     lemming = Lemmy(accounts['Main Account']['site'])
-    lemming.login(accounts['Main Account']['user'], 
-                accounts['Main Account']['password'])
+    lemming.login(accounts['Main Account']['user'],
+                  accounts['Main Account']['password'])
     communties = lemming.get_communities()
     print(f" {len(communties)} subscribed communities found")
     accounts.pop('Main Account', None)
@@ -43,11 +64,13 @@ def main():
         new_lemming.login(accounts[acc]['user'], accounts[acc]['password'])
         comms = new_lemming.get_communities()
         print(f" {len(comms)} subscribed communities found")
-        new_communities = {c: communties[c] for c in communties if c not in comms}
-        
+        new_communities = {c: communties[c]
+                           for c in communties if c not in comms}
+
         if new_communities:
             print(f" Subscribing to {len(new_communities)} new communities")
             new_lemming.subscribe(new_communities)
+
 
 if __name__ == "__main__":
     main()
