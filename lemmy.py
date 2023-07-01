@@ -1,5 +1,4 @@
 """Lemmy class for use in lemmy_migrate.py"""
-
 import sys
 from collections import defaultdict
 from time import sleep
@@ -7,13 +6,15 @@ from urllib.parse import urlparse
 
 import requests
 
+from log_config import configure_logging
+
 
 class Lemmy:
     """Lemmy class for use in the migration."""
     _api_version = "v3"
     _api_base_url = f"api/{_api_version}"
 
-    def __init__(self, url) -> None:
+    def __init__(self, url: str) -> None:
         parsed_url = urlparse(url)
         url_path = parsed_url.netloc if parsed_url.netloc else parsed_url.path
         self._site_url = urlparse(url_path)._replace(scheme='https',
@@ -21,24 +22,31 @@ class Lemmy:
                                                      path='').geturl()
         self._auth_token = None
         self._user_communities = defaultdict(dict)
+        self.logger = configure_logging(url)
 
     def login(self, user: str, password: str) -> None:
-        """Authenticate to instance"""
+        """Authenticate to Lemmy instance. Generates self._auth_token
+
+        Args:
+            user (str): Username to use for login
+            password (str): Password to use for login
+        """
         payload = {
             'username_or_email': user,
             'password': password
         }
+
+        self.logger.debug(f'Attempting to login to {self._site_url}')
 
         try:
             resp = self._request_it(
                 f"{self._site_url}/{self._api_base_url}/user/login",
                 method='POST', json=payload)
             self._auth_token = resp.json()['jwt']
+            self.logger.debug('Login succeeded.')
         except Exception as exception:
-            # raise Exception(f"Failed to authenticate: {e}")
-            self._println(
-                1, f"[ERROR]: login() failed for {user} on {self._site_url}")
-            self._println(2, f"-Details: {exception}")
+            self.logger.error(f"Login failed for {user} on {self._site_url}")
+            self.logger.error(f"Details: {exception}")
             sys.exit(1)
 
     def get_communities(self, type_: str = "Subscribed") -> dict:
@@ -115,50 +123,25 @@ class Lemmy:
                 params=payload)
             community_id = resp.json()['community']['community']['id']
         except Exception as exception:
-            self._println(2, f"> Failed to resolve community {exception}")
+            self._println(2, f"> Failed to resolve community. {exception}")
 
         return community_id
-
-    def get_comments(self,
-                     post_id: str,
-                     max_depth: int = 1,
-                     limit: int = 1000) -> dict:
-        """Get's comments for the site.
-
-        Args:
-            post_id (str): Post ID
-            max_depth (int, optional): Max comment depth. Defaults to 1.
-            limit (int, optional): Limit of comments. Defaults to 1000.
-
-        Returns:
-            dict: Dictionary of comments
-        """
-        payload = {
-            'post_id': post_id,
-            'max_depth': max_depth,
-            'limit': limit,
-        }
-
-        try:
-            req = self._request_it(
-                f"{self._site_url}/{self._api_base_url}/comment/list",
-                params=payload)
-        except Exception:
-            self._println(2, "> Failed to get comment list")
-
-        return req.json()['comments']
 
     def _rate_limit(self):
         sleep(1)
 
-    def _request_it(
-            self, endpoint: str, method: str = 'GET', params: str = None,
-            json: dict = None) -> requests.Response:
+    def _request_it(self,
+                    endpoint: str,
+                    method: str = 'GET',
+                    params: str = None,
+                    json: dict = None) -> requests.Response:
 
         self._rate_limit()
         try:
-            req = requests.request(method, url=endpoint,
-                                   params=params, json=json)
+            req = requests.request(method,
+                                   url=endpoint,
+                                   params=params,
+                                   json=json)
             req.raise_for_status()
             return req
         except requests.exceptions.HTTPError:
