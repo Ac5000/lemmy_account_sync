@@ -159,9 +159,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Ignore VS Code Settings
-.vscode/
-settings.json
-
 # Ignore myconfig.ini since it'll have your personal data
 myconfig.ini
