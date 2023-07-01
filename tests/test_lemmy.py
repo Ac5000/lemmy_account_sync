@@ -3,7 +3,7 @@ import os
 import unittest
 from pathlib import Path
 
-from lemmy_sync import get_accounts
+from src.lemmy_sync import get_accounts
 
 
 class TestLemmySync(unittest.TestCase):

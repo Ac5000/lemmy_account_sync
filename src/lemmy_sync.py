@@ -3,8 +3,8 @@ import configparser
 import sys
 from pathlib import Path
 
-from lemmy import Lemmy
-from log_config import configure_logging
+from src.lemmy import Lemmy
+from src.log_config import configure_logging
 
 # Setup a logger for debugging/outputs.
 logger = configure_logging('lemmy_sync')
