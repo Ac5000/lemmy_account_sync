@@ -161,3 +161,6 @@ cython_debug/
 
 # Ignore myconfig.ini since it'll have your personal data
 myconfig.ini
+
+# Ignore the scratch pad/testing file since it'll be terrible and have hard-coded info.
+scratch.py
