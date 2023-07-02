@@ -1,4 +1,4 @@
-"""All types in a single location."""
+"""All Lemmy types in a single location."""
 from .community import Community
 from .communityblockview import CommunityBlockView
 from .communityfollowerview import CommunityFollowerView

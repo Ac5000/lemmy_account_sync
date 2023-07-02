@@ -12,12 +12,15 @@ from .personblockview import PersonBlockView
 class MyUserInfo:
     """MyUserInfo dataclass."""
     local_user_view: LocalUserView
+    discussion_languages: int = None
     follows: list[CommunityFollowerView] = field(
         default_factory=list[CommunityFollowerView])
-    moderates:list[CommunityModeratorView] = field(
+
+    moderates: list[CommunityModeratorView] = field(
         default_factory=list[CommunityModeratorView])
+
     community_blocks: list[CommunityBlockView] = field(
         default_factory=list[CommunityBlockView])
+
     person_blocks: list[PersonBlockView] = field(
         default_factory=list[PersonBlockView])
-    discussion_languages: int

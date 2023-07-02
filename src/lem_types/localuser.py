@@ -1,8 +1,8 @@
 """LocalUser Class"""
 from dataclasses import dataclass, field
 
-from listingtype import ListingType
-from sorttype import SortType
+from .listingtype import ListingType
+from .sorttype import SortType
 
 
 @dataclass
@@ -13,8 +13,6 @@ class LocalUser:
     email: str
     show_nsfw: bool
     theme: str
-    default_sort_type: SortType = field(default_factory=SortType)
-    default_listing_type: ListingType = field(default_factory=ListingType)
     interface_language: str
     show_avatars: bool
     send_notifications_to_email: bool
@@ -26,3 +24,5 @@ class LocalUser:
     email_verified: bool
     accepted_application: bool
     totp_2fa_url: str
+    default_sort_type: SortType = field(default_factory=SortType)
+    default_listing_type: ListingType = field(default_factory=ListingType)
