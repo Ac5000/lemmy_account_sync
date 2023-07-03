@@ -89,9 +89,10 @@ def main():
         if instance.account.account == 'Main Account':
             settings_to_copy = instance.get_user_settings()
 
-    # Save those user settings to each instance.
-    for instance in instances:
-        instance.save_user_settings(settings_to_copy)
+    # Save those user settings to each instance if we found them.
+    if settings_to_copy:
+        for instance in instances:
+            instance.save_user_settings(settings_to_copy)
 
     # ---------------------------------------------------------
     # Sync subscribed/followed communities across instances.
