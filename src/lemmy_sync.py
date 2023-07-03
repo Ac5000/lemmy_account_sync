@@ -83,6 +83,9 @@ def main():
         sleep(0.25)
         instance.get_site_response()
 
+    # ---------------------------------------------------------
+    # Sync subscribed/followed communities across instances.
+    # ---------------------------------------------------------
     # Make a combined set of subscribed communities.
     logger.info('Making a combined set of subscriptions.')
     combined_subscriptions: set[str] = set()
@@ -95,8 +98,25 @@ def main():
         for subscription in combined_subscriptions:
             instance.subscribe_to_community(subscription)
 
-    # TODO - Get a site response again, compare against combined and try
-    # to subscribe again.
+    # ---------------------------------------------------------
+    # Sync blocked communities across instances.
+    # ---------------------------------------------------------
+    # Make a combined set of blocked communities.
+    logger.info('Making a combined set of blocked communities.')
+    combined_blocked_communities: set[str] = set()
+    for instance in instances:
+        for community in instance.myuserinfo.community_blocks:
+            combined_blocked_communities.add(community.community.actor_id)
+
+    # Block each community on each instance.
+    for instance in instances:
+        for community_url in combined_blocked_communities:
+            instance.block_community(community_url)
+
+    logger.info('PROGRAM COMPLETE. ACCOUNTS SYNCED.')
+
+    # TODO - Get a site response again, compare against combined lists
+    # and try failed things again.
 
 
 if __name__ == "__main__":

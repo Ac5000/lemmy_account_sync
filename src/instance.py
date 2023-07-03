@@ -169,3 +169,50 @@ class Instance:
             return None
 
         return req.json()['community']['community']['id']
+
+    def block_community(self, community_url: str) -> bool:
+        self.logger.debug(f'Blocking {community_url} from {self._site_url}')
+
+        # Check it's not already blocked first.
+        for blocked_community in self.myuserinfo.community_blocks:
+            if community_url in blocked_community.community.actor_id:
+                self.logger.debug(f'"{community_url}" already blocked from'
+                                  f' {self._site_url}')
+                return True
+
+        # Have to figure out/convert the URL into the ID to subscribe.
+        community_id = self.resolve_community_id(community_url=community_url)
+
+        if not community_id:
+            self.logger.error('Unable to resolve Community ID.'
+                              ' Unable to block at this time.')
+            return False
+
+        # Rest of this is sending the request to block.
+        payload = {'community_id': community_id,
+                   'block': True,
+                   'auth': self._auth_token}
+
+        self.logger.debug('Sending the block request.')
+        # Poor man's rate limiting...
+        sleep(0.25)
+        try:
+            req = requests.request(
+                method='POST',
+                url=f"{self.api_url}/community/block",
+                json=payload)
+            req.raise_for_status()
+
+        except Exception as error:
+            self.logger.error(f'Error blocking {community_url}.')
+            self.logger.error(f'{error = }')
+
+        # Poor man's rate limiting...
+        sleep(0.25)
+
+        if req.status_code == 200:
+            self.logger.info(f'Successfully blocked {community_url}')
+            return True
+        else:
+            self.logger.warning(f'Failed to block {community_url}')
+            return False
