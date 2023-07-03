@@ -1,6 +1,7 @@
 """Lemmy class for use in lemmy_migrate.py"""
 import json
 import sys
+from time import sleep
 from types import SimpleNamespace
 from urllib.parse import urlparse
 
@@ -85,32 +86,60 @@ class Instance:
             self.site_response.my_user.community_blocks,
             self.site_response.my_user.person_blocks)
 
-    def subscribe_to_community(self, community_url: str):
+    def subscribe_to_community(self, community_url: str) -> bool:
         """Attempts to subscribe to a community from this instance.
 
         Args:
             community_url (str): URL for the community to subscribe to
+
+        Returns:
+            (bool): True for success, False for failed to subscribe
         """
-        self.logger.debug(f'Subscribing to "{community_url}"')
+        self.logger.debug(f'Subscribing to "{community_url}" from'
+                          f' "{self._site_url}"')
 
         # Check it's not already subscribed to first.
         for subscribed_community in self.myuserinfo.follows:
             if community_url in subscribed_community.community.actor_id:
                 self.logger.debug(f'"{community_url}" already subscribed to.')
-                return
+                return True
 
+        # Have to figure out/convert the URL into the ID to subscribe.
         community_id = self.resolve_community_id(community_url=community_url)
 
         if not community_id:
             self.logger.error('Unable to resolve Community ID.'
                               ' Unable to subscribe at this time.')
-            return
+            return False
 
+        # Rest of this is sending the request to subscribe.
         payload = {'community_id': community_id,
                    'follow': True,
                    'auth': self._auth_token}
 
-        # TODO - Stopping here for the evening...
+        self.logger.debug('Sending the subscribe request.')
+        # Poor man's rate limiting...
+        sleep(0.25)
+        try:
+            req = requests.request(
+                method='POST',
+                url=f"{self.api_url}/community/follow",
+                json=payload)
+            req.raise_for_status()
+
+        except Exception as error:
+            self.logger.error(f'Error subscribing to {community_url}.')
+            self.logger.error(f'{error = }')
+
+        # Poor man's rate limiting...
+        sleep(0.25)
+
+        if req.status_code == 200:
+            self.logger.info(f'Successfully subscribed to {community_url}')
+            return True
+        else:
+            self.logger.warning(f'Failed to subscribe to {community_url}')
+            return False
 
     def resolve_community_id(self, community_url: str) -> int | None:
         """Attempts to resolve the community ID.
@@ -123,7 +152,7 @@ class Instance:
         Returns:
             (int | None): Community ID if it resolved, otherwise None
         """
-        self.logger.debug(f'Resolving {community_url}')
+        self.logger.debug(f'Resolving {community_url} from {self._site_url}')
         payload = {'q': community_url,
                    'auth': self._auth_token}
 

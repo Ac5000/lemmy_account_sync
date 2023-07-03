@@ -85,14 +85,18 @@ def main():
 
     # Make a combined set of subscribed communities.
     logger.info('Making a combined set of subscriptions.')
-    combined_subscriptions: set = set()
+    combined_subscriptions: set[str] = set()
     for instance in instances:
         for community in instance.myuserinfo.follows:
             combined_subscriptions.add(community.community.actor_id)
 
-    [print(i) for i in combined_subscriptions]
+    # Subscribe to each community on each instance.
+    for instance in instances:
+        for subscription in combined_subscriptions:
+            instance.subscribe_to_community(subscription)
 
-    print('test')
+    # TODO - Get a site response again, compare against combined and try
+    # to subscribe again.
 
 
 if __name__ == "__main__":
