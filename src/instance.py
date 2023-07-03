@@ -171,6 +171,14 @@ class Instance:
         return req.json()['community']['community']['id']
 
     def block_community(self, community_url: str) -> bool:
+        """Block a community for this instance
+
+        Args:
+            community_url (str): Community URL to block
+
+        Returns:
+            bool: True if successfully blocked, False if not
+        """
         self.logger.debug(f'Blocking {community_url} from {self._site_url}')
 
         # Check it's not already blocked first.
@@ -180,7 +188,7 @@ class Instance:
                                   f' {self._site_url}')
                 return True
 
-        # Have to figure out/convert the URL into the ID to subscribe.
+        # Have to figure out/convert the URL into the ID to block.
         community_id = self.resolve_community_id(community_url=community_url)
 
         if not community_id:
@@ -216,3 +224,90 @@ class Instance:
         else:
             self.logger.warning(f'Failed to block {community_url}')
             return False
+
+    def resolve_person_id(self, person_url: str) -> int | None:
+        """Attempts to resolve the person ID.
+
+        Apparently person IDs are different for each instance?
+
+        Args:
+            person_url (str): URL for the person
+
+        Returns:
+            (int | None): Person ID if it resolved, otherwise None
+        """
+        self.logger.debug(f'Resolving {person_url} from {self._site_url}')
+        payload = {'q': person_url,
+                   'auth': self._auth_token}
+
+        try:
+            req = requests.request(
+                method='GET',
+                url=f"{self.api_url}/resolve_object",
+                params=payload)
+            req.raise_for_status()
+
+        except Exception as error:
+            self.logger.error('Error resolving person ID.')
+            self.logger.error(f'{error = }')
+            return None
+
+        return req.json()['person']['person']['id']
+
+    def block_person(self, person_url: str) -> bool:
+        """Block a person for this instance
+
+        Args:
+            person_url (str): Person URL to block
+
+        Returns:
+            bool: True if successfully blocked, False if not
+        """
+        self.logger.debug(f'Blocking {person_url} from {self._site_url}')
+
+        # Check they not already blocked first.
+        for blocked_person in self.myuserinfo.person_blocks:
+            if person_url in blocked_person.target.actor_id:
+                self.logger.debug(f'"{person_url}" already blocked from'
+                                  f' {self._site_url}')
+                return True
+
+        # Have to figure out/convert the URL into the ID to block.
+        person_id = self.resolve_person_id(person_url=person_url)
+
+        if not person_id:
+            self.logger.error('Unable to resolve Person ID.'
+                              ' Unable to block at this time.')
+            return False
+
+        # Rest of this is sending the request to block.
+        payload = {'person_id': person_id,
+                   'block': True,
+                   'auth': self._auth_token}
+
+        self.logger.debug('Sending the block request.')
+        # Poor man's rate limiting...
+        sleep(0.25)
+        try:
+            req = requests.request(
+                method='POST',
+                url=f"{self.api_url}/user/block",
+                json=payload)
+            req.raise_for_status()
+
+        except Exception as error:
+            self.logger.error(f'Error blocking {person_url}.')
+            self.logger.error(f'{error = }')
+
+        # Poor man's rate limiting...
+        sleep(0.25)
+
+        if req.status_code == 200:
+            self.logger.info(f'Successfully blocked {person_url}')
+            return True
+        else:
+            self.logger.warning(f'Failed to block {person_url}')
+            return False
+
+    def save_user_settings(self):
+        self.logger.info(f'Saving user settings to {self._site_url}')

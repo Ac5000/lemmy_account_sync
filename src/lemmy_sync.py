@@ -113,6 +113,21 @@ def main():
         for community_url in combined_blocked_communities:
             instance.block_community(community_url)
 
+    # ---------------------------------------------------------
+    # Sync blocked users across instances.
+    # ---------------------------------------------------------
+    # Make a combined set of blocked users.
+    logger.info('Making a combined set of blocked users.')
+    combined_blocked_users: set[str] = set()
+    for instance in instances:
+        for user in instance.myuserinfo.person_blocks:
+            combined_blocked_users.add(user.target.actor_id)
+
+    # Block each user on each instance.
+    for instance in instances:
+        for user_url in combined_blocked_users:
+            instance.block_person(user_url)
+
     logger.info('PROGRAM COMPLETE. ACCOUNTS SYNCED.')
 
     # TODO - Get a site response again, compare against combined lists
