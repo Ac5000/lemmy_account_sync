@@ -9,7 +9,8 @@
         "-s",
         ".",
         "-p",
-        "*test_*.py"
+        "*test_*.py",
+        "-t"
     ],
     "python.testing.unittestEnabled": true
 }
