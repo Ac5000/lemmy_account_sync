@@ -6,7 +6,7 @@ from pathlib import Path
 from time import sleep
 
 from account import Account
-from lemmy import Instance
+from instance import Instance
 from log_config import configure_logging
 
 # Setup a logger for debugging/outputs.

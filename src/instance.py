@@ -1,4 +1,4 @@
-"""Lemmy class for use in lemmy_migrate.py"""
+"""Instance class for use in lemmy_sync.py"""
 import json
 import sys
 from time import sleep
