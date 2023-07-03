@@ -12,4 +12,5 @@ from .person import Person
 from .personaggregates import PersonAggregates
 from .personblockview import PersonBlockView
 from .personid import PersonId
+from .saveusersettings import SaveUserSettings
 from .sorttype import SortType
