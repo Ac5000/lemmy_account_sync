@@ -75,13 +75,23 @@ def main():
         instance = Instance(account=account)
         instances.append(instance)
 
-    # Login and get site response for each instance.
+    # Login, get site response, and user settings for each instance.
     logger.info('Logging into each instance and getting site responses.')
     for instance in instances:
         instance.login()
         # Poor man's rate limiting...
         sleep(0.25)
         instance.get_site_response()
+
+    # Establish an instance to copy user settings from since we don't know
+    # which account was updated last.
+    for instance in instances:
+        if instance.account.account == 'Main Account':
+            settings_to_copy = instance.get_user_settings()
+
+    # Save those user settings to each instance.
+    for instance in instances:
+        instance.save_user_settings(settings_to_copy)
 
     # ---------------------------------------------------------
     # Sync subscribed/followed communities across instances.

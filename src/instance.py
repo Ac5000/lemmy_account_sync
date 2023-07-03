@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import requests
 
 from account import Account
-from lem_types import MyUserInfo
+from lem_types import MyUserInfo, SaveUserSettings
 from log_config import configure_logging
 
 
@@ -85,6 +85,8 @@ class Instance:
             self.site_response.my_user.moderates,
             self.site_response.my_user.community_blocks,
             self.site_response.my_user.person_blocks)
+
+        self.get_user_settings()
 
     def subscribe_to_community(self, community_url: str) -> bool:
         """Attempts to subscribe to a community from this instance.
@@ -309,5 +311,47 @@ class Instance:
             self.logger.warning(f'Failed to block {person_url}')
             return False
 
-    def save_user_settings(self):
+    def get_user_settings(self) -> SaveUserSettings:
+        """Gets your user settings from the instance."""
+        self.logger.info(f'Getting user settings from {self._site_url}')
+        if not self._auth_token:
+            self.logger.error('No authentication to get settings.')
+            return
+        self.user_settings = SaveUserSettings(auth=self._auth_token)
+        self.user_settings.set_settings(self.myuserinfo.local_user_view.person,
+                                        self.myuserinfo.local_user_view.local_user)
+        self.logger.info(f'User settings established for {self._site_url}')
+        return self.user_settings
+
+    def save_user_settings(self, settings_to_save: SaveUserSettings) -> bool:
+        if settings_to_save == self.user_settings:
+            self.logger.info(
+                f'{self._site_url} user settings already match. Moving on.')
+            return True
+
         self.logger.info(f'Saving user settings to {self._site_url}')
+        self.user_settings = settings_to_save
+        # Rewriting auth for the settings since it was overwritten in
+        # last step.
+        self.user_settings.auth = self._auth_token
+
+        try:
+            req = requests.request(
+                method='PUT',
+                url=f"{self.api_url}/user/save_user_settings",
+                json=self.user_settings.paylod())
+            req.raise_for_status()
+
+        except Exception as error:
+            self.logger.error(
+                f'Error saving user settings on {self._site_url}.')
+            self.logger.error(f'{error = }')
+
+        if req.status_code == 200:
+            self.logger.info(
+                f'Successfully saved user settings to {self._site_url}')
+            return True
+        else:
+            self.logger.warning(
+                f'Failed to save user settings to {self._site_url}')
+            return False
