@@ -10,7 +10,6 @@ class LocalUser:
     """LocalUser dataclass."""
     id: int
     person_id: int
-    email: str
     show_nsfw: bool
     theme: str
     interface_language: str
@@ -23,6 +22,7 @@ class LocalUser:
     show_new_post_notifs: bool
     email_verified: bool
     accepted_application: bool
-    totp_2fa_url: str
+    email: str | None = None
+    totp_2fa_url: str | None = None
     default_sort_type: SortType = field(default_factory=SortType)
     default_listing_type: ListingType = field(default_factory=ListingType)

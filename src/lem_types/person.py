@@ -8,17 +8,17 @@ class Person:
     id: int
     name: str
     display_name: str
-    avatar: str
     banned: bool
     published: str
-    updated: str
     actor_id: str
-    bio: str
     local: bool
-    banner: str
     deleted: bool
-    matrix_user_id: str
     admin: bool
     bot_account: bool
-    ban_expires: str
     instance_id: int
+    avatar: str | None = None
+    ban_expires: str | None = None
+    banner: str | None = None
+    bio: str | None = None
+    matrix_user_id: str | None = None
+    updated: str | None = None
