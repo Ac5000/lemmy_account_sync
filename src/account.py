@@ -1,5 +1,5 @@
 """Account class."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -9,4 +9,4 @@ class Account:
     account: str
     site: str
     user: str
-    password: str
+    password: str = field(repr=False)
