@@ -86,12 +86,16 @@ def main():
     # Establish an instance to copy user settings from since we don't know
     # which account was updated last.
     for instance in instances:
+        if not instance._auth_token or not instance.site_response:
+            continue
         if instance.account.account == 'Main Account':
             settings_to_copy = instance.get_user_settings()
 
     # Save those user settings to each instance if we found them.
     if settings_to_copy:
         for instance in instances:
+            if not instance._auth_token or not instance.site_response:
+                continue
             instance.save_user_settings(settings_to_copy)
 
     # ---------------------------------------------------------
@@ -101,11 +105,15 @@ def main():
     logger.info('Making a combined set of subscriptions.')
     combined_subscriptions: set[str] = set()
     for instance in instances:
+        if not instance._auth_token or not instance.site_response:
+            continue
         for community in instance.myuserinfo.follows:
             combined_subscriptions.add(community.community.actor_id)
 
     # Subscribe to each community on each instance.
     for instance in instances:
+        if not instance._auth_token or not instance.site_response:
+            continue
         for subscription in combined_subscriptions:
             instance.subscribe_to_community(subscription)
 
@@ -116,11 +124,15 @@ def main():
     logger.info('Making a combined set of blocked communities.')
     combined_blocked_communities: set[str] = set()
     for instance in instances:
+        if not instance._auth_token or not instance.site_response:
+            continue
         for community in instance.myuserinfo.community_blocks:
             combined_blocked_communities.add(community.community.actor_id)
 
     # Block each community on each instance.
     for instance in instances:
+        if not instance._auth_token or not instance.site_response:
+            continue
         for community_url in combined_blocked_communities:
             instance.block_community(community_url)
 
@@ -131,11 +143,15 @@ def main():
     logger.info('Making a combined set of blocked users.')
     combined_blocked_users: set[str] = set()
     for instance in instances:
+        if not instance._auth_token or not instance.site_response:
+            continue
         for user in instance.myuserinfo.person_blocks:
             combined_blocked_users.add(user.target.actor_id)
 
     # Block each user on each instance.
     for instance in instances:
+        if not instance._auth_token or not instance.site_response:
+            continue
         for user_url in combined_blocked_users:
             instance.block_person(user_url)
 

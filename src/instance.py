@@ -1,6 +1,5 @@
 """Instance class for use in lemmy_sync.py"""
 import json
-import sys
 from time import sleep
 from types import SimpleNamespace
 from urllib.parse import urlparse
@@ -54,10 +53,12 @@ class Instance:
             self.logger.error(f'Login failed for {self.account.user} on'
                               f' {self._site_url}')
             self.logger.error(f'Details: {exception}')
-            sys.exit(1)
 
     def get_site_response(self) -> None:
         """Gets the SiteResponse. Will contain MyUserInfo."""
+        if not self._auth_token:
+            # Not logged in, just return without doing anything.
+            return
         self.logger.info('Attempting to get site response.')
         payload = {'auth': self._auth_token}
 
@@ -97,6 +98,10 @@ class Instance:
         Returns:
             (bool): True for success, False for failed to subscribe
         """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            return False
         self.logger.debug(f'Subscribing to "{community_url}" from'
                           f' "{self._site_url}"')
 
@@ -154,6 +159,10 @@ class Instance:
         Returns:
             (int | None): Community ID if it resolved, otherwise None
         """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            return None
         self.logger.debug(f'Resolving {community_url} from {self._site_url}')
         payload = {'q': community_url,
                    'auth': self._auth_token}
@@ -181,6 +190,10 @@ class Instance:
         Returns:
             bool: True if successfully blocked, False if not
         """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            return False
         self.logger.debug(f'Blocking {community_url} from {self._site_url}')
 
         # Check it's not already blocked first.
@@ -238,6 +251,10 @@ class Instance:
         Returns:
             (int | None): Person ID if it resolved, otherwise None
         """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            return None
         self.logger.debug(f'Resolving {person_url} from {self._site_url}')
         payload = {'q': person_url,
                    'auth': self._auth_token}
@@ -265,6 +282,10 @@ class Instance:
         Returns:
             bool: True if successfully blocked, False if not
         """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            return False
         self.logger.debug(f'Blocking {person_url} from {self._site_url}')
 
         # Check they not already blocked first.
@@ -312,11 +333,18 @@ class Instance:
             return False
 
     def get_user_settings(self) -> SaveUserSettings:
-        """Gets your user settings from the instance."""
+        """Gets your user settings from the instance.
+
+        Returns:
+            SaveUserSettings | None: Object that contains your settings
+        """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            self.logger.warning('Not logged in or no site response to get'
+                                ' user settings.')
+            return None
         self.logger.info(f'Getting user settings from {self._site_url}')
-        if not self._auth_token:
-            self.logger.error('No authentication to get settings.')
-            return
         self.user_settings = SaveUserSettings(auth=self._auth_token)
         self.user_settings.set_settings(self.myuserinfo.local_user_view.person,
                                         self.myuserinfo.local_user_view.local_user)
@@ -324,6 +352,21 @@ class Instance:
         return self.user_settings
 
     def save_user_settings(self, settings_to_save: SaveUserSettings) -> bool:
+        """Saves your user settings to the instance.
+
+        Args:
+            settings_to_save (SaveUserSettings): Settings to save to the instance
+
+        Returns:
+            bool: True if settings were saved, False otherwise.
+        """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            self.logger.warning('Not logged in or no site response to save'
+                                ' user settings.')
+            return False
+
         if settings_to_save == self.user_settings:
             self.logger.info(
                 f'{self._site_url} user settings already match. Moving on.')
