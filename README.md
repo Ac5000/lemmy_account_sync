@@ -44,7 +44,7 @@ Password = badpassword
 ```text
 Run "lemmy_sync.py" after creating and updating the configuration file.
 
-You will need the "Requests" package at minimum to run.
+I am using Python 3.11 for the code and you will need the "Requests" package at minimum to run.
 
 pip install -r requirements.txt just to run the application.
 
