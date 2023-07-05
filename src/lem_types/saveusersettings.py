@@ -56,7 +56,11 @@ class SaveUserSettings:
         """
         payload = dict()
         # Don't think you can save/point to another image? Might try later.
-        attributes_to_ignore: list[str] = ['avatar', 'banner']
+        # Also ignoring the 2fa thing since I think that's probably bad to
+        # copy across accounts...
+        attributes_to_ignore: list[str] = ['avatar',
+                                           'banner',
+                                           'generate_totp_2fa']
         for item in vars(self).items():
             if item[1] is not None and item[0] not in attributes_to_ignore:
                 payload.update([item])
