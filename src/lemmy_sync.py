@@ -22,7 +22,7 @@ def get_accounts(config_file: Path) -> list[Account]:
     Returns:
         list[Account]: List of Account objects
     """
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
 
     logger.info('Reading the config file.')
     read = config.read(config_file)
