@@ -177,9 +177,70 @@ class Instance:
         except Exception as error:
             self.logger.error('Error resolving community ID.')
             self.logger.error(f'{error = }')
+            # Poor man's rate limiting...
+            sleep(0.25)
             return None
 
         return req.json()['community']['community']['id']
+
+    def unsubscribe_to_community(self, community_url: str) -> bool:
+        """Attempts to unsubscribe to a community from this instance.
+
+        Args:
+            community_url (str): URL for the community to unsubscribe to
+
+        Returns:
+            (bool): True for success, False for failed to unsubscribe
+        """
+        if not self._auth_token or not self.site_response:
+            # Not logged in or site didn't respond initially.
+            # Return without doing anything.
+            return False
+        self.logger.debug(f'Unsubscribing to "{community_url}" from'
+                          f' "{self._site_url}"')
+
+        # Check if it's already not subscribed to first.
+        if not any(x for x in self.myuserinfo.follows
+                   if x.community.actor_id == community_url):
+            self.logger.debug(f'"{community_url}" already unsubscribed.')
+            return True
+
+        # Have to figure out/convert the URL into the ID to unsubscribe.
+        community_id = self.resolve_community_id(community_url=community_url)
+
+        if not community_id:
+            self.logger.error('Unable to resolve Community ID.'
+                              ' Unable to unsubscribe at this time.')
+            return False
+
+        # Rest of this is sending the request to subscribe.
+        payload = {'community_id': community_id,
+                   'follow': False,
+                   'auth': self._auth_token}
+
+        self.logger.debug('Sending the unsubscribe request.')
+        # Poor man's rate limiting...
+        sleep(0.25)
+        try:
+            req = requests.request(
+                method='POST',
+                url=f"{self.api_url}/community/follow",
+                json=payload)
+            req.raise_for_status()
+
+        except Exception as error:
+            self.logger.error(f'Error unsubscribing to {community_url}.')
+            self.logger.error(f'{error = }')
+
+        # Poor man's rate limiting...
+        sleep(0.25)
+
+        if req.status_code == 200:
+            self.logger.info(f'Successfully unsubscribed to {community_url}')
+            return True
+        else:
+            self.logger.warning(f'Failed to unsubscribe to {community_url}')
+            return False
 
     def block_community(self, community_url: str) -> bool:
         """Block a community for this instance
